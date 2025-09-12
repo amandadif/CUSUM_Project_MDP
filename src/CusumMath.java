@@ -58,7 +58,7 @@ public class CusumMath {
   }
 
   public int randomizer(int[] array) {
-
+    return 0;
   }
 
   public int getNumBootstraps() {
