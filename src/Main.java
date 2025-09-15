@@ -1,11 +1,12 @@
+import java.io.IOException;
 
 public class Main {
 
-  public static void main(String[] args) {
-
+  public static void main(String[] args) throws IOException {
     CusumMath cusumMath = new CusumMath();
-    CUSUM_GUI.array = cusumMath.cusum();
     cusumMath.userData();
+    CUSUM_GUI.array = cusumMath.cusum(FileReader.extractData());
+    //cusumMath.userData();
 
     CUSUM_GUI.main(args);
   }

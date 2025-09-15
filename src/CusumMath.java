@@ -28,9 +28,9 @@ public class CusumMath {
     confidenceLevel = scanner.nextInt();
   }
 
-  public int[] cusum() {
+  public int[] cusum(int[] arr) {
 
-    int[] arr = {1, 2, 3, 4, 5};
+    //int[] arr = {1, 2, 3, 4, 5};
     int[] cumulativeSum = new int[arr.length];
 
     cumulativeSum[0] = arr[0];
