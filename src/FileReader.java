@@ -16,8 +16,9 @@ public class FileReader {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+    /*
     raf.seek(0);
-    int[] rows = new int[50];
+    int[] rows = new int[(int) raf.length()];
     String line;
     int i = 0;
     while ((line = raf.readLine()) != null) {
@@ -25,6 +26,24 @@ public class FileReader {
       if (line.isEmpty()) continue;
       rows[i] = (Integer.parseInt(line));
       i++;
+    }
+
+     */
+    raf.seek(0); // reset file pointer
+    int count = 0;
+    String line;
+    while ((line = raf.readLine()) != null) {
+      line = line.trim();
+      if (!line.isEmpty()) count++;
+    }
+
+    int[] rows = new int[count];
+    raf.seek(0); // reset again
+    int i = 0;
+    while ((line = raf.readLine()) != null) {
+      line = line.trim();
+      if (line.isEmpty()) continue;
+      rows[i++] = Integer.parseInt(line);
     }
     System.out.println(Arrays.toString(rows));
     return rows;
