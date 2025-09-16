@@ -6,10 +6,11 @@ import java.util.List;
 import java.util.Scanner;
 
 public class FileReader {
+  public static String fileName;
   public static int[] extractData() throws IOException {
   try(Scanner sc = new Scanner(System.in)) {
-    System.out.println("What file would you like to read?");
-    String fileName = sc.nextLine();
+    //System.out.println("What file would you like to read?");
+    //String fileName = sc.nextLine();
     RandomAccessFile raf ;try {
       raf = new RandomAccessFile(fileName, "r");
       System.out.println("Found file " + fileName + " yippee!");
