@@ -16,8 +16,8 @@ public class CusumMath {
 
   private record ChangePoint(int index, double confidence) {}
   private record SegmentResults(boolean significant, int changeIndex, double confidence, int sDiff) {}
-  private int numBootstraps;
-  private double confidenceLevel;
+  public int numBootstraps;
+  public double confidenceLevel;
   private Random randomInt;
   private ArrayList<Integer> results; //change to (index, confidence) pairs list
 
@@ -172,7 +172,8 @@ public class CusumMath {
    * If yes, it will estimate where
    * @param arrayData could be the whole array or a sub array from recursion
    */
-  public record analyzeSegment(int[] arrayData) {
+  public SegmentResults analyzeSegment(int[] arrayData) {
+
 
   }
 
