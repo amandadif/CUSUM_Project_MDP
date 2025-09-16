@@ -34,6 +34,11 @@ public class CusumMath {
     confidenceLevel = num / 100; //change the whole number to a percent
   }
 
+  /**
+   * Calculates a cumulative sum from an array of deviations from the mean
+   * @param arr
+   * @return
+   */
   public int[] cusum(int[] arr) {
     int mean = calcAverage(arr); //uses the overall mean
     int[] cumulativeSum = new int[arr.length]; //array of deviations from the overall mean?
@@ -61,6 +66,11 @@ public class CusumMath {
     return average;
   }
 
+  /**
+   * total vertical spread
+   * @param array
+   * @return
+   */
   public int calcSdiff(int[] array) {
     int maxValue = array[0];   //initialize both with the first element in the array
     int minValue = array[0];
@@ -75,6 +85,11 @@ public class CusumMath {
     return diff;
   }
 
+  /**
+   * uses fisher yates shuffle
+   * @param array
+   * @return
+   */
   public int[] randomizer(int[] array) {
     int[] shuffledArray = new int[array.length];
     int temp = 0;
@@ -98,6 +113,7 @@ public class CusumMath {
   }
 
   /**
+   * need this to get a base statistic to compare to
    * might want to make into a double eventually?
    * @param originalArray
    * @returns Sdiff permanent
@@ -105,7 +121,7 @@ public class CusumMath {
   public int bootstrapOnce(int[] originalArray) {   //run one bootstrap iteration and return a single statistic
     int[] shuffledArray = randomizer(originalArray); //gets a shuffled copy
     int[] shuffledCusum = cusum(shuffledArray);
-    int Sdiff = calcSdiff(shuffledCusum);  
+    int Sdiff = calcSdiff(shuffledCusum);
     return Sdiff;
   }
 
