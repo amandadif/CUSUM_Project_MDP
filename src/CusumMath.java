@@ -14,6 +14,8 @@ import java.util.Scanner;
 // 2011       0.97
 public class CusumMath {
 
+  private record ChangePoint(int index, double confidence) {}
+  private record SegmentResults(boolean significant, int changeIndex, double confidence, int sDiff) {}
   private int numBootstraps;
   private double confidenceLevel;
   private Random randomInt;
@@ -123,6 +125,55 @@ public class CusumMath {
     int[] shuffledCusum = cusum(shuffledArray);
     int Sdiff = calcSdiff(shuffledCusum);
     return Sdiff;
+  }
+
+  /**
+   *
+   * @param originalArray
+   * @param num
+   * @return
+   */
+  public double bootstrapConfidence(int[] originalArray, int num) {
+    int[] originalCusum = cusum(originalArray);
+    int originalSdiff = calcSdiff(originalCusum);
+    double confidence;
+    int count = 0;
+    for(int i = 0; i < num; i++) {
+      int newSdiff = bootstrapOnce(originalArray);
+      if(newSdiff < originalSdiff) {
+        count++;
+      }
+    }
+    confidence = count / (double) num;
+    return confidence;    //we use this to compare this confidence to the base
+                          // number and we can tell if its significant change or not
+  }
+
+  /**
+   * used to estimate where the change happened using the largest index in the array
+   * @param cusum
+   * @returns the largest number's index in cusum
+   */
+  public int estimateChangeIndex(int[] cusum) {
+    int maxAbs = Math.abs(cusum[0]);
+    int changeIndex = 0;
+    for(int i = 1; i < cusum.length; i++) {
+      int currentValue = Math.abs(cusum[i]); //keeps track of largest value in cusum array
+      if(currentValue > maxAbs) {
+        maxAbs = currentValue;
+        changeIndex = i;
+      }
+    }
+    return changeIndex;
+  }
+
+  /**
+   * Decides of the segment has a significant change
+   * If yes, it will estimate where
+   * @param arrayData could be the whole array or a sub array from recursion
+   */
+  public record analyzeSegment(int[] arrayData) {
+
   }
 
   public int getNumBootstraps() {
