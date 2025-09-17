@@ -15,6 +15,7 @@ import javafx.stage.Stage;
 
 import java.awt.*;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 
 public class CUSUM_GUI extends Application {
@@ -55,8 +56,11 @@ public class CUSUM_GUI extends Application {
 
     applyButton.setOnAction(e -> {
       CusumMath.numBootstraps = Integer.parseInt(bootStrap.getText());
-      CusumMath.confidenceLevel = Integer.parseInt(confidenceText.getText());
+      CusumMath.confidenceLevel = Double.parseDouble(confidenceText.getText()) / 100.0;  //makes it a usable percent
       FileReader.fileName= (textFile.getText());
+
+      dataSeries1.getData().clear();  //clear the data before running again
+      dataSeries2.getData().clear();
 
       try {
         int[] fileData = FileReader.extractData();//reads the file and puts the data into an array

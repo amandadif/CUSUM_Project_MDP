@@ -12,28 +12,26 @@ import java.util.Scanner;
 // Value:    Confidence:
 // 1168       1.0
 // 2011       0.97
+
+/**
+ * The cusum math class takes the raw data, builds a mean centered array, calculates the Sdiff as a score, compares
+ * that score to many other shuffled scenarios based on how many bootstraps there are. If it is found to be significant, it locates
+ * the change from the extreme value in the cusum array, then recursively splits the array and repeats until it finds all
+ * changes.
+ */
 public class CusumMath {
 
-  private record ChangePoint(int index, double confidence) {}
+  public static record ChangePoint(int index, double confidence) {}
   private record SegmentResults(boolean significant, int changeIndex, double confidence, int sDiff) {}
-  public int numBootstraps;
-  public double confidenceLevel;
+  public static int numBootstraps;
+  public static double confidenceLevel;
   private Random randomInt;
-  private ArrayList<Integer> results; //change to (index, confidence) pairs list
+  private ArrayList<ChangePoint> results = new ArrayList<>();  //(index, confidence) pairs list, can remove if we just return a record
 
   public CusumMath() {
     numBootstraps = 0;
     confidenceLevel = 0.0;
     randomInt = new Random();
-  }
-
-  public void userData() {
-    Scanner scanner = new Scanner(System.in);
-    System.out.print("How many bootstraps? : ");
-    numBootstraps = scanner.nextInt();
-    System.out.print("What is your confidence level? : ");
-    double num = scanner.nextDouble();
-    confidenceLevel = num / 100; //change the whole number to a percent
   }
 
   /**
@@ -54,7 +52,6 @@ public class CusumMath {
     for (int num : cumulativeSum) {
       System.out.print(num + " ");
     }
-
     return cumulativeSum;
   }
 
@@ -174,7 +171,62 @@ public class CusumMath {
    */
   public SegmentResults analyzeSegment(int[] arrayData) {
 
+    if(arrayData == null || arrayData.length < 4) {  //just <4 because it needs to be large enough
+      return new SegmentResults(false, -1, 0.0, 0);
+    }
+    int[] cusumArray = cusum(arrayData);  //builds the mean centered cusum of the array
+    int sdiff = calcSdiff(cusumArray);  // computes the sDiff
+    double confidence = bootstrapConfidence(arrayData, getNumBootstraps()); //computes the confidence with bootstrap method
+    if(confidence < getConfidenceLevel()) {   //compare this confidence to the given confidence level
+      return new SegmentResults(false, -1, confidence, sdiff);
+    }
+    int index = estimateChangeIndex(cusumArray);
+    return new SegmentResults(true, index, confidence, sdiff);
+  }
 
+  public int[] split(int[] array, int from, int to){
+    if(from > to) {
+      return new int[0]; //return an empty array
+    }
+    int[] temp = new int[to - from + 1];
+    for(int i = from; i <= to; i++) {   //fill temp with parameter array
+      temp[i - from] = array[i];
+    }
+    return temp;
+  }
+
+  public ArrayList<ChangePoint> findChanges(int[] array) {
+    int startOffset = 0;
+    ArrayList<ChangePoint> changePoints = new ArrayList<>();
+    if(array == null || array.length < 4) {
+      return new ArrayList<>();  //return an empty array
+    }
+    return findChangesRecursive(array, startOffset);
+  }
+
+  public ArrayList<ChangePoint> findChangesRecursive(int[] array, int startOffset) {
+    ArrayList<ChangePoint> out = new ArrayList<>();
+    if(array == null || array.length < 4) {
+      return out;
+    }
+    SegmentResults segmentResults = analyzeSegment(array);
+    if(!segmentResults.significant()) {
+      return out;
+    }
+    int index = segmentResults.changeIndex(); //index is within array
+    int indexOverall = startOffset + index;
+    out.add(new ChangePoint(indexOverall, segmentResults.confidence()));
+
+    int[] left = split(array, 0, index); //split the array at the change from the beginning
+    int[] right = new int[0];
+    if(index + 1 <= array.length - 1) {
+       right = split(array, index + 1, array.length - 1);  //offset by + 1 because the right segment begins after the split point
+    }
+
+    out.addAll(findChangesRecursive(left, startOffset));  //recursion
+    out.addAll(findChangesRecursive(right, startOffset + index + 1));  //recursion. adds an entire list into out list
+
+    return out;
   }
 
   public int getNumBootstraps() {
@@ -183,17 +235,5 @@ public class CusumMath {
   public double getConfidenceLevel() {
     return confidenceLevel;
   }
-
-
-
-
-
-
-
-
-
-
-
-
 
 }
