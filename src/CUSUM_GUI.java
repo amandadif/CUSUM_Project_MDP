@@ -69,7 +69,7 @@ public class CUSUM_GUI extends Application {
         CUSUM_GUI.CUSUM_Array = cusumMath.cusum(fileData);
         ArrayList<CusumMath.ChangePoint> changePoint = cusumMath.findChanges(fileData);
         for (CusumMath.ChangePoint c : changePoint) {
-          System.out.println("Change point at: " + c.index() + " With Confidence: " + CusumMath.confidenceLevel);
+          System.out.println("Change point at: " + c.index() + " With Confidence: " + c.confidence());
         }
       } catch (IOException ex) {
         throw new RuntimeException(ex);

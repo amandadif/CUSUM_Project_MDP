@@ -28,8 +28,6 @@ public class CusumMath {
   private ArrayList<ChangePoint> results = new ArrayList<>();  //(index, confidence) pairs list, can remove if we just return a record
 
   public CusumMath() {
-    numBootstraps = 0;
-    confidenceLevel = 0.0;
     randomInt = new Random();
   }
 
@@ -43,7 +41,7 @@ public class CusumMath {
     double mean = calcAverage(arr); //uses the overall mean
     double[] cumulativeSum = new double[arr.length]; //array of deviations from the overall mean?
 
-    cumulativeSum[0] = (int) (arr[0] - mean);   //first element in the array is the (value - mean)
+    cumulativeSum[0] = (arr[0] - mean);   //first element in the array is the (value - mean)
     for (int i = 1; i < arr.length; i++) {
       cumulativeSum[i] = cumulativeSum[i - 1] + (arr[i] - mean);
     }
@@ -129,23 +127,18 @@ public class CusumMath {
    * @return
    */
   public double bootstrapConfidence(double[] originalArray, int num) {
+    if (num <= 0) return 0.0;
+
     double[] originalCusum = cusum(originalArray);
     double originalSdiff = calcSdiff(originalCusum);
-    double confidence;
-    if(num <= 0){
-      return 0.0;
-    }
 
-    int count = 0;
-    for(int i = 0; i < num; i++) {
+    int geCount = 0; // count shuffled Sdiff >= original
+    for (int i = 0; i < num; i++) {
       double newSdiff = bootstrapOnce(originalArray);
-      if(newSdiff < originalSdiff) {
-        count++;
-      }
+      if (newSdiff >= originalSdiff) geCount++;
     }
-    confidence = count / (double) num;
-    return confidence;    //we use this to compare this confidence to the base
-                          // number and we can tell if its significant change or not
+    double p = geCount / (double) num;
+    return 1.0 - p; // higher means more significant
   }
 
   /**
@@ -172,8 +165,8 @@ public class CusumMath {
    * @param arrayData could be the whole array or a sub array from recursion
    */
   public SegmentResults analyzeSegment(double[] arrayData) {
-    if(arrayData == null || arrayData.length < 4) {  //just <4 because it needs to be large enough
-      return new SegmentResults(false, -1, 0.0, 0);
+    if(arrayData == null || arrayData.length < 8) {  //just <8 because it needs to be large enough
+      return new SegmentResults(false, -1, 0.0, 0.0);
     }
     double[] cusumArray = cusum(arrayData);  //builds the mean centered cusum of the array
     double sdiff = calcSdiff(cusumArray);  // computes the sDiff
@@ -196,40 +189,34 @@ public class CusumMath {
     return temp;
   }
 
+  private static final int MIN_SEG_LEN = 80;  // try 80 first; lower to 50 if still missing
+  private static final int GUARD = 8;         // small buffer around the change
+
   public ArrayList<ChangePoint> findChanges(double[] array) {
-    int startOffset = 0;
-    ArrayList<ChangePoint> changePoints = new ArrayList<>();
-    if(array == null || array.length < 4) {
-      return new ArrayList<>();  //return an empty array
-    }
-    return findChangesRecursive(array, startOffset);
+    return findChangesRecursive(array, 0);
   }
 
   public ArrayList<ChangePoint> findChangesRecursive(double[] array, int startOffset) {
     ArrayList<ChangePoint> out = new ArrayList<>();
-    if(array == null || array.length < 4) {
-      return out;
-    }
-    SegmentResults segmentResults = analyzeSegment(array);
-    if(!segmentResults.significant()) {
-      return out;
-    }
-    int index = segmentResults.changeIndex(); //index is within array
-    if(index <= 0 || index >= array.length - 1) {
-      return out;
-    }
-    int indexOverall = startOffset + index;
-    out.add(new ChangePoint(indexOverall, segmentResults.confidence()));
+    if (array == null || array.length < MIN_SEG_LEN) return out;
 
-    double[] left = split(array, 0, index); //split the array at the change from the beginning
-    double[] right = new double[0];
-    if(index + 1 <= array.length - 1) {
-       right = split(array, index + 1, array.length - 1);  //offset by + 1 because the right segment begins after the split point
-    }
+    SegmentResults seg = analyzeSegment(array);  // uses segment's own mean + bootstrap
+    
+    if (!seg.significant()) return out;
 
-    out.addAll(findChangesRecursive(left, startOffset));  //recursion
-    out.addAll(findChangesRecursive(right, startOffset + index + 1));  //recursion. adds an entire list into out list
+    int idx = seg.changeIndex();
+    int globalIdx = startOffset + idx;
+    out.add(new ChangePoint(globalIdx, seg.confidence()));     // record it even if near an edge
 
+    // Split EXCLUDING the change ± guard
+    int leftEnd  = Math.max(0, idx - GUARD - 1);
+    int rightBeg = Math.min(array.length - 1, idx + GUARD + 1);
+
+    double[] left  = (leftEnd >= 0) ? split(array, 0, leftEnd) : new double[0];
+    double[] right = (rightBeg <= array.length - 1) ? split(array, rightBeg, array.length - 1) : new double[0];
+
+    if (left.length  >= MIN_SEG_LEN) out.addAll(findChangesRecursive(left,  startOffset));
+    if (right.length >= MIN_SEG_LEN) out.addAll(findChangesRecursive(right, startOffset + rightBeg));
     return out;
   }
 
