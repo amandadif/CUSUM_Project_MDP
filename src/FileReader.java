@@ -7,7 +7,7 @@ import java.util.Scanner;
 
 public class FileReader {
   public static String fileName;
-  public static int[] extractData() throws IOException {
+  public static double[] extractData() throws IOException {
   try(Scanner sc = new Scanner(System.in)) {
     //System.out.println("What file would you like to read?");
     //String fileName = sc.nextLine();
@@ -38,13 +38,13 @@ public class FileReader {
       if (!line.isEmpty()) count++;
     }
 
-    int[] rows = new int[count];
+    double[] rows = new double[count];
     raf.seek(0); // reset again
     int i = 0;
     while ((line = raf.readLine()) != null) {
       line = line.trim();
       if (line.isEmpty()) continue;
-      rows[i++] = Integer.parseInt(line);
+      rows[i++] = Double.parseDouble(line);
     }
     System.out.println(Arrays.toString(rows));
     return rows;

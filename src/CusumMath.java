@@ -1,6 +1,5 @@
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.Scanner;
 
 // fisher yates shuffle to randomize the data in the array
 // Use arrayList
@@ -22,7 +21,7 @@ import java.util.Scanner;
 public class CusumMath {
 
   public static record ChangePoint(int index, double confidence) {}
-  private record SegmentResults(boolean significant, int changeIndex, double confidence, int sDiff) {}
+  private record SegmentResults(boolean significant, int changeIndex, double confidence, double sDiff) {}
   public static int numBootstraps;
   public static double confidenceLevel;
   private Random randomInt;
@@ -36,44 +35,49 @@ public class CusumMath {
 
   /**
    * Calculates a cumulative sum from an array of deviations from the mean
+   *
    * @param arr
    * @return
    */
-  public int[] cusum(int[] arr) {
-    int mean = calcAverage(arr); //uses the overall mean
-    int[] cumulativeSum = new int[arr.length]; //array of deviations from the overall mean?
+  public double[] cusum(double[] arr) {
+    double mean = calcAverage(arr); //uses the overall mean
+    double[] cumulativeSum = new double[arr.length]; //array of deviations from the overall mean?
 
-    cumulativeSum[0] = arr[0] - mean;   //first element in the array is the (value - mean)
+    cumulativeSum[0] = (int) (arr[0] - mean);   //first element in the array is the (value - mean)
     for (int i = 1; i < arr.length; i++) {
       cumulativeSum[i] = cumulativeSum[i - 1] + (arr[i] - mean);
     }
 
     // Prints the result for now, we can delete once done
-    for (int num : cumulativeSum) {
+    /*
+    for (double num : cumulativeSum) {
       System.out.print(num + " ");
     }
+
+     */
     return cumulativeSum;
   }
 
-  public int calcAverage(int[] array) {
-    int average = 0;
+  public double calcAverage(double[] array) {
+    double average = 0;
     for(int i = 0; i < array.length; i++){
       average += array[i];
     }
     average /= array.length;
-    System.out.println("Average is " + average);
+    //System.out.println("Average is " + average);
     return average;
   }
 
   /**
    * total vertical spread
+   *
    * @param array
    * @return
    */
-  public int calcSdiff(int[] array) {
-    int maxValue = array[0];   //initialize both with the first element in the array
-    int minValue = array[0];
-    int diff = 0;
+  public double calcSdiff(double[] array) {
+    double maxValue = array[0];   //initialize both with the first element in the array
+    double minValue = array[0];
+    double diff = 0;
 
     for(int i = 0; i < array.length; i++){  //goes through the array once it's computed from cusum
       maxValue = Math.max(maxValue, array[i]);
@@ -86,12 +90,13 @@ public class CusumMath {
 
   /**
    * uses fisher yates shuffle
+   *
    * @param array
    * @return
    */
-  public int[] randomizer(int[] array) {
-    int[] shuffledArray = new int[array.length];
-    int temp = 0;
+  public double[] randomizer(double[] array) {
+    double[] shuffledArray = new double[array.length];
+    double temp = 0;
     int randomIndex = 0;
 
     if(array == null || array.length < 2){  //if it's too small or null, there's nothing to do so just return the array
@@ -114,13 +119,14 @@ public class CusumMath {
   /**
    * need this to get a base statistic to compare to
    * might want to make into a double eventually?
+   *
    * @param originalArray
    * @returns Sdiff permanent
    */
-  public int bootstrapOnce(int[] originalArray) {   //run one bootstrap iteration and return a single statistic
-    int[] shuffledArray = randomizer(originalArray); //gets a shuffled copy
-    int[] shuffledCusum = cusum(shuffledArray);
-    int Sdiff = calcSdiff(shuffledCusum);
+  public double bootstrapOnce(double[] originalArray) {   //run one bootstrap iteration and return a single statistic
+    double[] shuffledArray = randomizer(originalArray); //gets a shuffled copy
+    double[] shuffledCusum = cusum(shuffledArray);
+    double Sdiff = calcSdiff(shuffledCusum);
     return Sdiff;
   }
 
@@ -130,13 +136,13 @@ public class CusumMath {
    * @param num
    * @return
    */
-  public double bootstrapConfidence(int[] originalArray, int num) {
-    int[] originalCusum = cusum(originalArray);
-    int originalSdiff = calcSdiff(originalCusum);
+  public double bootstrapConfidence(double[] originalArray, int num) {
+    double[] originalCusum = cusum(originalArray);
+    double originalSdiff = calcSdiff(originalCusum);
     double confidence;
     int count = 0;
     for(int i = 0; i < num; i++) {
-      int newSdiff = bootstrapOnce(originalArray);
+      double newSdiff = bootstrapOnce(originalArray);
       if(newSdiff < originalSdiff) {
         count++;
       }
@@ -151,11 +157,11 @@ public class CusumMath {
    * @param cusum
    * @returns the largest number's index in cusum
    */
-  public int estimateChangeIndex(int[] cusum) {
-    int maxAbs = Math.abs(cusum[0]);
+  public int estimateChangeIndex(double[] cusum) {
+    double maxAbs = Math.abs(cusum[0]);
     int changeIndex = 0;
     for(int i = 1; i < cusum.length; i++) {
-      int currentValue = Math.abs(cusum[i]); //keeps track of largest value in cusum array
+      double currentValue = Math.abs(cusum[i]); //keeps track of largest value in cusum array
       if(currentValue > maxAbs) {
         maxAbs = currentValue;
         changeIndex = i;
@@ -169,13 +175,12 @@ public class CusumMath {
    * If yes, it will estimate where
    * @param arrayData could be the whole array or a sub array from recursion
    */
-  public SegmentResults analyzeSegment(int[] arrayData) {
-
+  public SegmentResults analyzeSegment(double[] arrayData) {
     if(arrayData == null || arrayData.length < 4) {  //just <4 because it needs to be large enough
       return new SegmentResults(false, -1, 0.0, 0);
     }
-    int[] cusumArray = cusum(arrayData);  //builds the mean centered cusum of the array
-    int sdiff = calcSdiff(cusumArray);  // computes the sDiff
+    double[] cusumArray = cusum(arrayData);  //builds the mean centered cusum of the array
+    double sdiff = calcSdiff(cusumArray);  // computes the sDiff
     double confidence = bootstrapConfidence(arrayData, getNumBootstraps()); //computes the confidence with bootstrap method
     if(confidence < getConfidenceLevel()) {   //compare this confidence to the given confidence level
       return new SegmentResults(false, -1, confidence, sdiff);
@@ -184,18 +189,18 @@ public class CusumMath {
     return new SegmentResults(true, index, confidence, sdiff);
   }
 
-  public int[] split(int[] array, int from, int to){
+  public double[] split(double[] array, int from, int to){
     if(from > to) {
-      return new int[0]; //return an empty array
+      return new double[0]; //return an empty array
     }
-    int[] temp = new int[to - from + 1];
+    double[] temp = new double[to - from + 1];
     for(int i = from; i <= to; i++) {   //fill temp with parameter array
       temp[i - from] = array[i];
     }
     return temp;
   }
 
-  public ArrayList<ChangePoint> findChanges(int[] array) {
+  public ArrayList<ChangePoint> findChanges(double[] array) {
     int startOffset = 0;
     ArrayList<ChangePoint> changePoints = new ArrayList<>();
     if(array == null || array.length < 4) {
@@ -204,7 +209,7 @@ public class CusumMath {
     return findChangesRecursive(array, startOffset);
   }
 
-  public ArrayList<ChangePoint> findChangesRecursive(int[] array, int startOffset) {
+  public ArrayList<ChangePoint> findChangesRecursive(double[] array, int startOffset) {
     ArrayList<ChangePoint> out = new ArrayList<>();
     if(array == null || array.length < 4) {
       return out;
@@ -217,14 +222,15 @@ public class CusumMath {
     int indexOverall = startOffset + index;
     out.add(new ChangePoint(indexOverall, segmentResults.confidence()));
 
-    int[] left = split(array, 0, index); //split the array at the change from the beginning
-    int[] right = new int[0];
+    double[] left = split(array, 0, index); //split the array at the change from the beginning
+    double[] right = new double[0];
     if(index + 1 <= array.length - 1) {
        right = split(array, index + 1, array.length - 1);  //offset by + 1 because the right segment begins after the split point
     }
 
     out.addAll(findChangesRecursive(left, startOffset));  //recursion
     out.addAll(findChangesRecursive(right, startOffset + index + 1));  //recursion. adds an entire list into out list
+    System.out.println(out);
 
     return out;
   }

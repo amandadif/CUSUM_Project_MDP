@@ -19,8 +19,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class CUSUM_GUI extends Application {
-  public static int[] array2;
-  public static int[] CUSUM_Array;
+  public static double[] array2;
+  public static double[] CUSUM_Array;
 
   public void start(Stage primaryStage) {
     NumberAxis xAxis = new NumberAxis();
@@ -63,7 +63,7 @@ public class CUSUM_GUI extends Application {
       dataSeries2.getData().clear();
 
       try {
-        int[] fileData = FileReader.extractData();//reads the file and puts the data into an array
+        double[] fileData = FileReader.extractData();//reads the file and puts the data into an array
         CUSUM_GUI.array2 = fileData;
         CusumMath cusumMath = new CusumMath();
         CUSUM_GUI.CUSUM_Array = cusumMath.cusum(fileData);
