@@ -48,13 +48,6 @@ public class CusumMath {
       cumulativeSum[i] = cumulativeSum[i - 1] + (arr[i] - mean);
     }
 
-    // Prints the result for now, we can delete once done
-    /*
-    for (double num : cumulativeSum) {
-      System.out.print(num + " ");
-    }
-
-     */
     return cumulativeSum;
   }
 
@@ -64,7 +57,7 @@ public class CusumMath {
       average += array[i];
     }
     average /= array.length;
-    //System.out.println("Average is " + average);
+
     return average;
   }
 
@@ -118,7 +111,6 @@ public class CusumMath {
 
   /**
    * need this to get a base statistic to compare to
-   * might want to make into a double eventually?
    *
    * @param originalArray
    * @returns Sdiff permanent
@@ -140,6 +132,10 @@ public class CusumMath {
     double[] originalCusum = cusum(originalArray);
     double originalSdiff = calcSdiff(originalCusum);
     double confidence;
+    if(num <= 0){
+      return 0.0;
+    }
+
     int count = 0;
     for(int i = 0; i < num; i++) {
       double newSdiff = bootstrapOnce(originalArray);
@@ -219,6 +215,9 @@ public class CusumMath {
       return out;
     }
     int index = segmentResults.changeIndex(); //index is within array
+    if(index <= 0 || index >= array.length - 1) {
+      return out;
+    }
     int indexOverall = startOffset + index;
     out.add(new ChangePoint(indexOverall, segmentResults.confidence()));
 
@@ -230,7 +229,6 @@ public class CusumMath {
 
     out.addAll(findChangesRecursive(left, startOffset));  //recursion
     out.addAll(findChangesRecursive(right, startOffset + index + 1));  //recursion. adds an entire list into out list
-    System.out.println(out);
 
     return out;
   }
